@@ -50,6 +50,7 @@ import android.os.SystemClock;
 import android.os.Trace;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -687,7 +688,6 @@ public class UdfpsController implements DozeReceiver {
         mPressedParams.setTitle("Fingerprint on display.touched");
 
         mCoreLayoutParams.dimAmount = 0.0f;
-        mPressedParams.dimAmount = 0.0f;
 
         mFingerprintManager.setUdfpsOverlayController(new UdfpsOverlayController());
 
@@ -708,8 +708,10 @@ public class UdfpsController implements DozeReceiver {
         mPressedView = new ImageView(context)  {
             @Override
             protected void onDraw(Canvas canvas) {
-                canvas.drawCircle(mSensorProps.sensorRadius, mSensorProps.sensorRadius,
-                             mSensorProps.sensorRadius / 1.0f, mPaintFingerprint);
+                if (mOnFingerDown) {
+                    canvas.drawCircle(mSensorProps.sensorRadius, mSensorProps.sensorRadius,
+                                 mSensorProps.sensorRadius / 1.0f, mPaintFingerprint);
+                }
                 super.onDraw(canvas);
             }
         };
@@ -1057,6 +1059,22 @@ public class UdfpsController implements DozeReceiver {
         }
         dispatchPress();
         mOnFingerDown = true;
+        int curBrightness = Settings.System.getInt(mContext.getContentResolver(),
+                     Settings.System.SCREEN_BRIGHTNESS, 100);
+        int dimAmount = 0;
+        IFingerprintInscreen daemon = getFingerprintInScreenDaemon();
+        try {
+            dimAmount = daemon.getDimAmount(curBrightness);
+        } catch (RemoteException e) {
+            // do nothing
+        }
+
+        mPressedParams.dimAmount = dimAmount / 255.0f;
+        if (mPressedView.getParent() == null) {
+            mWindowManager.addView(mPressedView, mPressedParams);
+        } else {
+            mWindowManager.updateViewLayout(mPressedView, mPressedParams);
+        }
         mFingerprintManager.onPointerDown(mSensorProps.sensorId, x, y, minor, major);
         Trace.endAsyncSection("UdfpsController.e2e.onPointerDown", 0);
         Trace.beginAsyncSection("UdfpsController.e2e.startIllumination", 0);
