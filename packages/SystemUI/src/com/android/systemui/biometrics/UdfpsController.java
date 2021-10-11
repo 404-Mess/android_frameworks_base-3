@@ -168,6 +168,7 @@ public class UdfpsController implements DozeReceiver, UdfpsHbmProvider {
     private Runnable mAodInterruptRunnable;
     private boolean mOnFingerDown;
     private boolean mAttemptedToDismissKeyguard;
+    private final boolean mShouldBoostBrightness;
 
     private IFingerprintInscreen mFingerprintInscreenDaemon;
 
@@ -711,6 +712,10 @@ public class UdfpsController implements DozeReceiver, UdfpsHbmProvider {
 
         udfpsHapticsSimulator.setUdfpsController(this);
 
+        IFingerprintInscreen daemon = getFingerprintInScreenDaemon();
+
+        mShouldBoostBrightness = daemon.shouldBoostBrightness();
+
         Resources res = context.getResources();
 
         mPaintFingerprint.setColor(res.getColor(R.color.config_fodColor));
@@ -1081,6 +1086,10 @@ public class UdfpsController implements DozeReceiver, UdfpsHbmProvider {
             dimAmount = daemon.getDimAmount(curBrightness);
         } catch (RemoteException e) {
             // do nothing
+        }
+
+        if (mShouldBoostBrightness) {
+             mPressedParams.screenBrightness = 1.0f;
         }
 
         mPressedParams.dimAmount = dimAmount / 255.0f;

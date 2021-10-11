@@ -1228,7 +1228,7 @@ public class Instrumentation {
 
         // Set device model for Genshin Impact internal testings
         String hardwareName = SystemProperties.get("ro.boot.hardware");
-        if (hardwareName == "gourami" &&
+        if (hardwareName == "kona" &&
             "com.miHoYo.GenshinImpact".equals(packageName) ||
             "com.miHoYo.Yuanshen".equals(packageName)) {
             setBuildField(packageName, "MODEL", "Pixel 5 Pro");
