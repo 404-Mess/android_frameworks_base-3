@@ -713,8 +713,12 @@ public class UdfpsController implements DozeReceiver, UdfpsHbmProvider {
         udfpsHapticsSimulator.setUdfpsController(this);
 
         IFingerprintInscreen daemon = getFingerprintInScreenDaemon();
-
-        mShouldBoostBrightness = daemon.shouldBoostBrightness();
+        
+        try {
+            mShouldBoostBrightness = daemon.shouldBoostBrightness();
+        } catch (RemoteException e) {
+            throw new RuntimeException("Failed to retrieve FOD circle position or size");
+        }
 
         Resources res = context.getResources();
 
