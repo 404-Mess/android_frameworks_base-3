@@ -29,6 +29,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
 import android.graphics.Paint;
@@ -172,6 +173,7 @@ public class UdfpsController implements DozeReceiver {
     private final WindowManager.LayoutParams mPressedParams = new WindowManager.LayoutParams();
 
     private final Paint mPaintFingerprintBackground = new Paint();
+    private final Paint mPaintFingerprint = new Paint();
 
     @VisibleForTesting
     public static final AudioAttributes VIBRATION_SONIFICATION_ATTRIBUTES =
@@ -674,6 +676,9 @@ public class UdfpsController implements DozeReceiver {
         mCoreLayoutParams.layoutInDisplayCutoutMode =
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
         mCoreLayoutParams.privateFlags = WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY;
+        mCoreLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
+                 WindowManager.LayoutParams.FLAG_DIM_BEHIND ;
 
         mPressedParams.copyFrom(mCoreLayoutParams);
         mPressedParams.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
@@ -681,6 +686,7 @@ public class UdfpsController implements DozeReceiver {
         mCoreLayoutParams.setTitle("Fingerprint on display");
         mPressedParams.setTitle("Fingerprint on display.touched");
 
+        mCoreLayoutParams.dimAmount = 0.0f;
         mPressedParams.dimAmount = 0.0f;
 
         mFingerprintManager.setUdfpsOverlayController(new UdfpsOverlayController());
@@ -691,17 +697,19 @@ public class UdfpsController implements DozeReceiver {
 
         udfpsHapticsSimulator.setUdfpsController(this);
 
-        mPaintFingerprintBackground.setColor(context.getResources()
-                .getColor(R.color.config_fodColorBackground));
+        Resources res = context.getResources();
+
+        mPaintFingerprint.setColor(res.getColor(R.color.config_fodColor));
+        mPaintFingerprint.setAntiAlias(true);
+
+        mPaintFingerprintBackground.setColor(res.getColor(R.color.config_fodColorBackground));
         mPaintFingerprintBackground.setAntiAlias(true);
 
         mPressedView = new ImageView(context)  {
             @Override
             protected void onDraw(Canvas canvas) {
-                if (mOnFingerDown) {
-                    canvas.drawCircle(mSensorProps.sensorRadius, mSensorProps.sensorRadius,
-                            mSensorProps.sensorRadius / 1.0f, mPaintFingerprintBackground);
-                }
+                canvas.drawCircle(mSensorProps.sensorRadius, mSensorProps.sensorRadius,
+                             mSensorProps.sensorRadius / 1.0f, mPaintFingerprint);
                 super.onDraw(canvas);
             }
         };
